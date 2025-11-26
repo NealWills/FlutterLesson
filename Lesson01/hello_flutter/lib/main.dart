@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -45,39 +48,109 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void removeFavorite(WordPair pair) {
+    favorites.remove(pair);
+    notifyListeners();
+  }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
   @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  var selectedIndex = 0;
+  
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          SafeArea(
-            child: NavigationRail(
-              destinations: [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home),
-                  label: Text("Home"),
+
+    late Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = TabHomePage();
+        break;
+      case 1:
+        page = TabCollectionPage();
+        break;
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scaffold(
+          body: Row(
+            children: [
+              SafeArea(
+                child: NavigationRail(
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home),
+                      label: Text("Home"),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.favorite),
+                      label: Text("Favorite"),
+                    ),
+                  ],
+                  extended: constraints.maxWidth >= 600,
+                  minWidth: 60,
+                  minExtendedWidth: 80,
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
+                    // Handle navigation here
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                    // selectedIndex = value;
+                    // print("Selected destination: $value");
+                  },
                 ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.favorite),
-                  label: Text("Favorite"),
+              ),
+              Expanded(
+                child: Container(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: page,
                 ),
-              ],
-              selectedIndex: 0,
-            ),
+              ),
+            ],
           ),
-          Expanded(
-            child: Container(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: TabHomePage(),
-            ),
+        );
+      },
+    );
+  }
+}
+
+class TabCollectionPage extends StatelessWidget {
+  const TabCollectionPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+    if (appState.favorites.isEmpty) {
+      return Center(child: Text('No favorites yet.'));
+    }
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text('You have ${appState.favorites.length} favorites:'),
+        ),
+        for (var pair in appState.favorites)
+          ListTile(
+            leading: Icon(Icons.favorite),
+            title: Text(pair.asLowerCase),
+            onTap: () {
+              appState.removeFavorite(pair);
+            },
           ),
-        ],
-      ),
+      ],
     );
   }
 }
