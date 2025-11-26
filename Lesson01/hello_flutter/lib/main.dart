@@ -83,6 +83,8 @@ class MyHomePage extends StatelessWidget {
 }
 
 class TabHomePage extends StatelessWidget {
+  const TabHomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
